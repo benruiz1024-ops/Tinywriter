@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- iPhone-friendly viewport + safe areas -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <title>TinyWriter Planner (iPhone-ready)</title>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33;
+      --text:#e9ecff;
+      --muted:#a9b3e6;
+      --accent:#8be9fd;
+      --accent2:#bd93f9;
+      --danger:#ff5555;
+      --ok:#50fa7b;
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 14px 50px rgba(0,0,0,0.38);
+      --radius: 18px;
+      --tap: 48px; /* thumb-friendly */
+    }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(189,147,249,0.25), transparent 60%),
+        radial-gradient(1000px 800px at 85% 15%, rgba(139,233,253,0.18), transparent 55%),
+        linear-gradient(180deg, var(--bg), #070a14);
+      color:var(--text);
+      padding:
+        calc(14px + env(safe-area-inset-top))
+        calc(14px + env(safe-area-inset-right))
+        calc(14px + env(safe-area-inset-bottom))
+        calc(14px + env(safe-area-inset-left));
+    }
+    .wrap{ max-width: 1100px; margin: 0 auto; }
+    header{
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+      margin-bottom: 12px;
+    }
+    .title{ display:flex; flex-direction:column; gap:6px; }
+    .title h1{ margin:0; font-size: 18px; letter-spacing: 0.2px; }
+    .title p{ margin:0; color:var(--muted); font-size: 12px; line-height: 1.35; max-width: 62ch; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+    }
+    .pill label{ font-size: 12px; color: var(--muted); }
+    select, input[type="password"], input[type="text"], input[type="number"]{
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline: none;
+      min-height: var(--tap);
+    }
+    select{ padding-right: 40px; }
+    main{
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    /* Desktop/Tablet nav */
+    nav{
+      position: sticky;
+      top: calc(10px + env(safe-area-inset-top));
+      background: rgba(18,26,51,0.55);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .navhdr{
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+    .navhdr .small{ color: var(--muted); font-size: 12px; }
+    .navlist{ display:flex; flex-direction:column; padding: 8px; gap: 6px;}
+    .navbtn{
+      display:flex; align-items:center; justify-content:space-between;
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      text-align:left;
+      cursor:pointer;
+      min-height: var(--tap);
+      font-size: 14px;
+    }
+    .navbtn:hover{ background: rgba(255,255,255,0.05); }
+    .navbtn.active{
+      background: rgba(139,233,253,0.10);
+      border-color: rgba(139,233,253,0.30);
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+    }
+
+    section.card{
+      background: rgba(18,26,51,0.58);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    .card .hd{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      padding: 16px 16px 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+    .card .hd h2{ margin:0; font-size: 16px; }
+    .card .hd .sub{ margin: 3px 0 0 0; color:var(--muted); font-size: 12px; line-height: 1.35;}
+    .card .bd{ padding: 16px; display:grid; gap: 14px; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    textarea{
+      width:100%;
+      min-height: 120px;
+      resize: vertical;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px;
+      outline: none;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+    .field label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    button{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 12px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      min-height: var(--tap);
+      font-size: 14px;
+    }
+    button.primary{
+      border-color: rgba(139,233,253,0.35);
+      background: rgba(139,233,253,0.12);
+    }
+    button.primary:hover{ background: rgba(139,233,253,0.18); }
+    button.ghost:hover{ background: rgba(255,255,255,0.08); }
+    button.danger{
+      border-color: rgba(255,85,85,0.38);
+      background: rgba(255,85,85,0.12);
+    }
+    button.danger:hover{ background: rgba(255,85,85,0.18); }
+
+    .help{
+      font-size: 12px; color: var(--muted);
+      border:1px dashed rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.10);
+      padding: 12px 12px;
+      border-radius: 14px;
+    }
+    .kpi{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .kpi .box{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      min-width: 90px;
+    }
+    .kpi .box .n{ font-size: 14px; }
+    .kpi .box .t{ font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .out{
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: 14px;
+      padding: 12px;
+      white-space: pre-wrap;
+      line-height: 1.35;
+      overflow:auto;
+      max-height: 420px;
+      -webkit-overflow-scrolling: touch;
+      font-size: 14px;
+    }
+    .hint{ color: var(--muted); font-size: 12px; }
+    .ok{ color: var(--ok); }
+    .warn{ color: #ffb86c; }
+    .err{ color: var(--danger); }
+    .inline{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .fileline{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+    input[type="file"]{ color: var(--muted); }
+    .tiny{ font-size: 11px; color: var(--muted); }
+    .divider{ height:1px; background: var(--border); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* iPhone / small screens: turn nav into a bottom tab bar */
+    @media (max-width: 860px){
+      header{ flex-direction:column; align-items:stretch; }
+      .pill{ width: 100%; justify-content:space-between; }
+      main{ grid-template-columns: 1fr; }
+      nav{
+        position: fixed;
+        left: calc(10px + env(safe-area-inset-left));
+        right: calc(10px + env(safe-area-inset-right));
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        top: auto;
+        z-index: 99;
+        border-radius: 22px;
+      }
+      .navhdr{ display:none; }
+      .navlist{
+        display:grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        padding: 8px;
+      }
+      .navbtn{
+        flex-direction:column;
+        gap:4px;
+        justify-content:center;
+        padding: 10px 8px;
+        font-size: 12px;
+      }
+      .navbtn span:first-child{ text-align:center; }
+      .badge{ font-size: 10px; padding: 3px 6px; }
+      /* Make room for bottom bar */
+      body{ padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+      .row{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>TinyWriter Planner (iPhone‑ready)</h1>
+      <p>Runs locally in Safari. Offline templates work instantly. “AI Mode” only works reliably when hosted on HTTPS (not as a local file) and it’s not safe to keep API keys in a browser.</p>
+    </div>
+
+    <div class="pill">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="offline">Offline (instant templates)</option>
+        <option value="ai">AI Mode (OpenAI key)</option>
+      </select>
+      <span class="badge" id="status">offline</span>
+    </div>
+  </header>
+
+  <main>
+    <nav aria-label="Steps">
+      <div class="navhdr">
+        <div class="small">Steps</div>
+        <div class="tiny">Autosaves on this device.</div>
+      </div>
+      <div class="navlist">
+        <button class="navbtn active" data-step="setup"><span>Setup</span><span class="badge">start</span></button>
+        <button class="navbtn" data-step="premise"><span>Premise</span><span class="badge" id="bPremise">—</span></button>
+        <button class="navbtn" data-step="acts"><span>9‑Act</span><span class="badge" id="bActs">—</span></button>
+        <button class="navbtn" data-step="chapters"><span>Chapters</span><span class="badge" id="bCh">—</span></button>
+        <button class="navbtn" data-step="export"><span>Export</span><span class="badge">txt</span></button>
+      </div>
+    </nav>
+
+    <!-- SETUP -->
+    <section class="card" id="step-setup">
+      <div class="hd">
+        <div>
+          <h2>Setup: vibe + inspirations + bibles</h2>
+          <p class="sub">This is your “creative compass.” Everything generated should match this.</p>
+        </div>
+        <div class="kpi">
+          <div class="box"><div class="n" id="kFiles">0</div><div class="t">files</div></div>
+          <div class="box"><div class="n" id="kWords">0</div><div class="t">bible words</div></div>
+          <div class="box"><div class="n ok" id="kSaved">✓</div><div class="t">saved</div></div>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="field">
+            <label>Genre / subgenre</label>
+            <input id="genre" type="text" placeholder="e.g., romantic fantasy, grimdark epic..." />
+          </div>
+          <div class="field">
+            <label>Target length</label>
+            <input id="length" type="text" placeholder="e.g., novella, 90k novel, web serial..." />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Vibe / tone</label>
+            <textarea id="vibe" placeholder="e.g., lyrical, intimate, wondrous; warm found-family; undercurrent of dread..."></textarea>
+          </div>
+          <div class="field">
+            <label>Inspirations</label>
+            <textarea id="inspo" placeholder="e.g., Earthsea, Ghibli, Elden Ring atmosphere, Slavic folklore..."></textarea>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Non‑negotiables (boundaries, must-haves, avoid list)</label>
+            <textarea id="nonneg" placeholder="What must be true? Tropes to avoid? Content boundaries?"></textarea>
+          </div>
+          <div class="field">
+            <label>Reader promise</label>
+            <textarea id="promise" placeholder="Wonder, romance, puzzles, catharsis, horror, cozy warmth..."></textarea>
+          </div>
+        </div>
+
+        <div class="help">
+          <b>Bibles:</b> Paste below or load <span class="mono">.txt/.md/.json</span> from the iPhone Files app. PDFs/docx: copy/paste the text for now.
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Paste World Bible (optional)</label>
+            <textarea id="world" placeholder="Paste your world bible text here..."></textarea>
+          </div>
+          <div class="field">
+            <label>Paste Character Bible (optional)</label>
+            <textarea id="chars" placeholder="Paste your character bible text here..."></textarea>
+          </div>
+        </div>
+
+        <div class="fileline">
+          <input id="file" type="file" multiple accept=".txt,.md,.json,text/plain,application/json" />
+          <button class="ghost" id="clearFiles">Clear files</button>
+          <span class="tiny" id="fileMsg">No files loaded.</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field" id="aiBox" style="display:none;">
+          <label>AI Mode: OpenAI API Key (not recommended in-browser)</label>
+          <div class="inline">
+            <input id="apiKey" type="password" placeholder="sk-..." style="min-width: 220px; flex: 1;" />
+            <input id="model" type="text" value="gpt-5-mini" style="min-width: 140px;" />
+            <button class="ghost" id="testKey">Test</button>
+            <span class="tiny" id="keyStatus">Key not set.</span>
+          </div>
+          <div class="help" id="secureNote" style="margin-top:10px; display:none;">
+            <b>Heads up:</b> AI Mode usually requires opening this app from an <b>https://</b> website. If you opened it as a local file on iPhone, it may not be a “secure context,” so clipboard + AI calls can fail. Offline mode will still work.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="goPremise">Continue → Premise</button>
+          <button class="danger" id="resetAll">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREMISE -->
+    <section class="card" id="step-premise" style="display:none;">
+      <div class="hd">
+        <div>
+          <h2>Premise</h2>
+          <p class="sub">Generate options, tap one to select, then lock it.</p>
+        </div>
+        <div class="badge" id="premiseState">not generated</div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="field">
+            <label>Story engine seed</label>
+            <textarea id="engine" placeholder="e.g., 'a cursed heir must hide their magic while investigating a vanished god'"></textarea>
+          </div>
+          <div class="field">
+            <label>Constraints (optional)</label>
+            <textarea id="constraints" placeholder="single POV, slow burn romance, PG-13 violence..."></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="genPremise">Generate</button>
+          <button class="ghost" id="copyPremisePrompt">Copy prompt</button>
+        </div>
+
+        <div class="help">If you’re in Offline mode, “Copy prompt” lets you paste into any LLM for richer output.</div>
+
+        <div class="field">
+          <label>Output</label>
+          <div class="out" id="premiseOut"></div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="lockPremise">Lock selected premise</button>
+          <button class="ghost" id="toActs">Go to 9‑Act</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTS -->
+    <section class="card" id="step-acts" style="display:none;">
+      <div class="hd">
+        <div>
+          <h2>9‑Act outline</h2>
+          <p class="sub">Macro structure: what happens, character turn, and next-act tension.</p>
+        </div>
+        <div class="badge" id="actsState">not generated</div>
+      </div>
+      <div class="bd">
+        <div class="actions">
+          <button class="primary" id="genActs">Generate</button>
+          <button class="ghost" id="copyActsPrompt">Copy prompt</button>
+        </div>
+
+        <div class="field">
+          <label>Output</label>
+          <div class="out" id="actsOut"></div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="toChapters">Continue → Chapters</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTERS -->
+    <section class="card" id="step-chapters" style="display:none;">
+      <div class="hd">
+        <div>
+          <h2>Chapter outline</h2>
+          <p class="sub">Turn the 9 acts into a chapter map (goal → obstacle → turn → hook).</p>
+        </div>
+        <div class="badge" id="chState">not generated</div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="field">
+            <label>Chapters (draft plan)</label>
+            <input id="chapCount" type="number" min="3" max="120" value="24" />
+          </div>
+          <div class="field">
+            <label>POV / structure notes (optional)</label>
+            <input id="pov" type="text" placeholder="single POV; alternating POVs; epistolary..." />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="genCh">Generate</button>
+          <button class="ghost" id="copyChPrompt">Copy prompt</button>
+        </div>
+
+        <div class="field">
+          <label>Output</label>
+          <div class="out" id="chOut"></div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="toExport">Continue → Export</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPORT -->
+    <section class="card" id="step-export" style="display:none;">
+      <div class="hd">
+        <div>
+          <h2>Export</h2>
+          <p class="sub">iPhone-friendly: copy or share. (Downloads are inconsistent on iOS, so this is safer.)</p>
+        </div>
+        <div class="badge">local</div>
+      </div>
+      <div class="bd">
+        <div class="actions">
+          <button class="primary" id="copyExport">Copy export text</button>
+          <button class="ghost" id="shareExport">Share…</button>
+          <button class="ghost" id="dlTxt">Try download .txt</button>
+          <button class="danger" id="clearExport">Clear outputs only</button>
+        </div>
+        <div class="help">
+          <b>Best iPhone workflow:</b> Tap <b>Copy export text</b> → paste into Notes, Scrivener, Google Docs, Obsidian, etc.
+        </div>
+        <div class="field">
+          <label>Preview</label>
+          <div class="out" id="exportPreview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/*
+  TinyWriter Planner — iPhone-ready single-page app
+  Fixes vs the earlier version:
+  - Bottom tab bar on small screens (thumb-friendly)
+  - Clipboard fallback for iOS / non-secure contexts
+  - “Share…” export (Web Share API) for iPhone
+  - AI Mode warns about HTTPS + safety
+*/
+
+const $ = (id) => document.getElementById(id);
+const stateKey = "tinywriter_mvp_iphone_v1";
+
+let store = {
+  mode: "offline",
+  model: "gpt-5-mini",
+  genre: "", length: "", vibe: "", inspo: "", nonneg: "", promise: "",
+  world: "", chars: "",
+  loadedFiles: [], // {name, text}
+  engine: "", constraints: "",
+  premiseOptions: [],
+  premiseLocked: "",
+  actsText: "",
+  chapCount: 24,
+  pov: "",
+  chaptersText: ""
+};
+
+function save(){
+  localStorage.setItem(stateKey, JSON.stringify(store));
+  $("kSaved").textContent = "✓";
+  $("kSaved").className = "n ok";
+}
+function load(){
+  const raw = localStorage.getItem(stateKey);
+  if(!raw) return;
+  try{ store = { ...store, ...JSON.parse(raw) }; }catch(e){}
+}
+
+function bindInputs(){
+  const map = [
+    ["mode","mode"], ["model","model"],
+    ["genre","genre"], ["length","length"], ["vibe","vibe"], ["inspo","inspo"],
+    ["nonneg","nonneg"], ["promise","promise"], ["world","world"], ["chars","chars"],
+    ["engine","engine"], ["constraints","constraints"],
+    ["chapCount","chapCount"], ["pov","pov"],
+  ];
+  map.forEach(([id,key])=>{
+    const el = $(id); if(!el) return;
+    if(el.type === "number") el.value = store[key] ?? el.value;
+    else el.value = store[key] ?? "";
+    el.addEventListener("input", ()=>{
+      store[key] = (el.type === "number") ? Number(el.value) : el.value;
+      $("kSaved").textContent = "…";
+      $("kSaved").className = "n warn";
+      setTimeout(save, 120);
+      updateStats();
+      updateExportPreview();
+    });
+    if(id==="mode"){
+      el.addEventListener("change", ()=>{
+        store.mode = el.value;
+        updateModeUI();
+        save();
+      });
+    }
+  });
+  $("apiKey").value = "";
+}
+
+function updateModeUI(){
+  $("status").textContent = store.mode;
+  $("aiBox").style.display = (store.mode==="ai") ? "block" : "none";
+  // iOS / file:// often isn't secure context; warn.
+  const insecure = !window.isSecureContext;
+  $("secureNote").style.display = (store.mode==="ai" && insecure) ? "block" : "none";
+}
+
+function updateStats(){
+  const bible = getBibleText();
+  const words = bible.trim() ? bible.trim().split(/\s+/).length : 0;
+  $("kFiles").textContent = String(store.loadedFiles.length);
+  $("kWords").textContent = String(words);
+  $("fileMsg").textContent = store.loadedFiles.length ? store.loadedFiles.map(f=>f.name).join(", ") : "No files loaded.";
+  $("bPremise").textContent = store.premiseLocked ? "locked" : (store.premiseOptions.length ? "ready" : "—");
+  $("bActs").textContent = store.actsText ? "ready" : "—";
+  $("bCh").textContent = store.chaptersText ? "ready" : "—";
+}
+
+function stepShow(which){
+  ["setup","premise","acts","chapters","export"].forEach(s=>{
+    $("step-"+s).style.display = (s===which) ? "block" : "none";
+  });
+  document.querySelectorAll(".navbtn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.step===which);
+  });
+  if(which==="export") updateExportPreview();
+}
+document.querySelectorAll(".navbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=> stepShow(btn.dataset.step));
+});
+
+function resetAll(){
+  if(!confirm("Reset everything on this device?")) return;
+  localStorage.removeItem(stateKey);
+  location.reload();
+}
+$("resetAll").addEventListener("click", resetAll);
+
+function getBibleText(){
+  const fileText = (store.loadedFiles||[]).map(f=>`\n\n[FILE: ${f.name}]\n${f.text}`).join("\n");
+  const pasted = [
+    store.world ? `\n\n[WORLD BIBLE]\n${store.world}` : "",
+    store.chars ? `\n\n[CHARACTER BIBLE]\n${store.chars}` : "",
+  ].join("");
+  return (fileText + pasted).trim();
+}
+
+function makeCompass(){
+  return [
+    store.genre ? `Genre: ${store.genre}` : "",
+    store.length ? `Target length: ${store.length}` : "",
+    store.vibe ? `Vibe/Tone: ${store.vibe}` : "",
+    store.inspo ? `Inspirations: ${store.inspo}` : "",
+    store.promise ? `Reader promise: ${store.promise}` : "",
+    store.nonneg ? `Non-negotiables / boundaries: ${store.nonneg}` : ""
+  ].filter(Boolean).join("\n");
+}
+
+function offlinePremises(){
+  const vibe = (store.vibe||"").trim();
+  const genre = (store.genre||"fantasy").trim() || "fantasy";
+  const engine = (store.engine||"").trim() || "A protagonist wants something impossible and pays a price.";
+  const stakes = ["a city","a family","a kingdom","a friendship","a secret order","a god's bargain","a fragile peace"];
+  const antagonists = ["a rival heir","a forgotten saint","a gentle tyrant","a bureaucracy of angels","a charming monster","the protagonist's own oath"];
+  const twist = [
+    "the 'villain' is protecting the world",
+    "magic requires memory as fuel",
+    "the love interest is the key and the lock",
+    "the prophecy is a trap written after the fact",
+    "the canon has one crucial lie",
+    "the hero caused the curse long ago"
+  ];
+
+  const out = [];
+  for(let i=0;i<5;i++){
+    out.push(`• ${cap(genre)} premise #${i+1}: ${engine} Stakes: ${pick(stakes)}. Opposition: ${pick(antagonists)}. Twist: ${pick(twist)}. ${vibe ? "Tone: "+trimOne(vibe,120) : ""}`.trim());
+  }
+  return out;
+}
+
+function offlineActs(){
+  const p = store.premiseLocked || (store.premiseOptions[0]||"A protagonist pursues a goal and changes.");
+  const beats = [
+    "Hook & ordinary wound",
+    "Inciting disruption",
+    "Refusal / consequence",
+    "First commitment",
+    "Midpoint reversal",
+    "Costs escalate",
+    "Darkest truth revealed",
+    "Final plan",
+    "Climax + aftermath"
+  ];
+  const out = beats.map((b, i)=>`Act ${i+1}: ${b}\n- What happens: …\n- Character turn: …\n- New question: …\n`).join("\n");
+  return `Premise: ${p}\n\n${out}`;
+}
+
+function offlineChapters(){
+  const count = clamp(Number(store.chapCount||24), 3, 120);
+  const acts = store.actsText || offlineActs();
+  const perAct = Math.max(1, Math.floor(count/9));
+  let ch = 1;
+  let out = `Chapters (${count})\n\n`;
+  for(let a=1;a<=9;a++){
+    out += `== Act ${a} ==\n`;
+    const n = (a<9) ? perAct : (count - (perAct*8));
+    for(let i=0;i<n;i++){
+      out += `Chapter ${ch}: Goal → Obstacle → Turn → Hook\n- Setup: …\n- Conflict: …\n- Outcome/Hook: …\n\n`;
+      ch++;
+    }
+  }
+  out += `\n(Notes)\nPOV: ${store.pov || "—"}\n`;
+  out += `\n(Act summary used)\n${acts}`;
+  return out.trim();
+}
+
+// AI Mode intentionally minimal here; best practice is a tiny server.
+// This remains as a "power user" option.
+async function callOpenAI(prompt){
+  const key = $("apiKey").value.trim();
+  if(!key) throw new Error("No API key set.");
+  const model = ($("model").value || store.model || "gpt-5-mini").trim();
+  const res = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { "Content-Type":"application/json", "Authorization": "Bearer " + key },
+    body: JSON.stringify({ model, input: prompt, store: false })
+  });
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error(`OpenAI error (${res.status}): ${t.slice(0,300)}`);
+  }
+  const data = await res.json();
+  return data.output_text || JSON.stringify(data, null, 2);
+}
+
+function buildPremisePrompt(){
+  const bible = getBibleText();
+  const compass = makeCompass();
+  return [
+`You are an expert story developer for fiction writers.`,
+`Create 5 distinct premise options.`,
+`Each is 1-2 sentences: protagonist, desire, obstacle, stakes, and a twist.`,
+`Match the vibe/inspirations. Respect non-negotiables. Treat bibles as canon.`,
+``,
+`CREATIVE COMPASS:`,
+compass || "(none provided)",
+``,
+`USER STORY ENGINE (seed):`,
+store.engine || "(none provided)",
+``,
+`CONSTRAINTS:`,
+store.constraints || "(none provided)",
+``,
+`BIBLES / CANON CONTEXT:`,
+bible ? clip(bible, 8000) : "(none)"
+  ].join("\n");
+}
+
+function buildActsPrompt(){
+  const bible = getBibleText();
+  const compass = makeCompass();
+  return [
+`You are an expert story outliner.`,
+`Using the locked premise, write a 9-act outline.`,
+`Each act: what happens, character turn, and a new question/tension.`,
+`Keep it specific. Maintain bible consistency.`,
+``,
+`CREATIVE COMPASS:`,
+compass || "(none provided)",
+``,
+`LOCKED PREMISE:`,
+store.premiseLocked || "(none locked yet)",
+``,
+`BIBLES / CANON CONTEXT:`,
+bible ? clip(bible, 8000) : "(none)"
+  ].join("\n");
+}
+
+function buildChaptersPrompt(){
+  const bible = getBibleText();
+  const compass = makeCompass();
+  const count = clamp(Number(store.chapCount||24), 3, 120);
+  return [
+`You are an expert novel planner.`,
+`Turn the 9-act outline into a ${count}-chapter outline.`,
+`Each chapter: POV (if any), goal, obstacle, turn, and hook.`,
+`Escalate tension and keep continuity.`,
+``,
+`CREATIVE COMPASS:`,
+compass || "(none provided)",
+``,
+`LOCKED PREMISE:`,
+store.premiseLocked || "(none locked yet)",
+``,
+`9-ACT OUTLINE:`,
+store.actsText || "(not generated yet)",
+``,
+`POV NOTES: ${store.pov || "(none)"}`,
+``,
+`BIBLES / CANON CONTEXT:`,
+bible ? clip(bible, 8000) : "(none)"
+  ].join("\n");
+}
+
+// Clipboard helper: works on iPhone even if not a secure context (fallback).
+async function copyText(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  // Fallback (iOS-friendly)
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.top = "-9999px";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
+  let ok = false;
+  try{ ok = document.execCommand("copy"); }catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function buildExport(){
+  const compass = makeCompass();
+  const bible = getBibleText();
+  return [
+    "=== TinyWriter Planner Export ===",
+    "",
+    "== Creative Compass ==",
+    compass || "(none)",
+    "",
+    "== Canon / Bibles ==",
+    bible || "(none)",
+    "",
+    "== Premise options ==",
+    (store.premiseOptions||[]).join("\n") || "(none)",
+    "",
+    "== Locked premise ==",
+    store.premiseLocked || "(none)",
+    "",
+    "== 9-act outline ==",
+    store.actsText || "(none)",
+    "",
+    "== Chapter outline ==",
+    store.chaptersText || "(none)"
+  ].join("\n");
+}
+
+function updateExportPreview(){
+  $("exportPreview").textContent = buildExport();
+}
+
+function download(filename, text){
+  // iOS Safari isn't always consistent with download attribute; we still try.
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+// File loading
+$("file").addEventListener("change", async (e)=>{
+  const files = Array.from(e.target.files || []);
+  const loaded = await Promise.all(files.map(f => readFileAsText(f).then(text => ({name:f.name, text}))));
+  store.loadedFiles = [...store.loadedFiles, ...loaded];
+  save(); updateStats(); updateExportPreview();
+  e.target.value = "";
+});
+$("clearFiles").addEventListener("click", ()=>{
+  store.loadedFiles = [];
+  save(); updateStats(); updateExportPreview();
+});
+
+// Nav buttons
+$("goPremise").addEventListener("click", ()=> stepShow("premise"));
+$("toActs").addEventListener("click", ()=> stepShow("acts"));
+$("toChapters").addEventListener("click", ()=> stepShow("chapters"));
+$("toExport").addEventListener("click", ()=> stepShow("export"));
+
+// Premise generation + selection
+let selectedPremiseIndex = -1;
+function renderPremises(lines){
+  const out = lines.map((t,i)=>`<div data-i="${i}" style="padding:10px 10px;border-radius:14px;cursor:pointer;border:1px solid rgba(255,255,255,0.10);margin:8px 0;background:rgba(255,255,255,0.03)">${escapeHtml(t)}</div>`).join("");
+  $("premiseOut").innerHTML = out || "(no output)";
+  selectedPremiseIndex = -1;
+  $("premiseOut").querySelectorAll("div[data-i]").forEach(div=>{
+    div.addEventListener("click", ()=>{
+      $("premiseOut").querySelectorAll("div[data-i]").forEach(d=>d.style.outline="none");
+      div.style.outline = "2px solid rgba(139,233,253,0.55)";
+      selectedPremiseIndex = Number(div.dataset.i);
+    });
+  });
+}
+
+$("genPremise").addEventListener("click", async ()=>{
+  $("premiseState").textContent = "generating…";
+  $("premiseState").className = "badge warn";
+  try{
+    let lines = [];
+    if(store.mode==="ai"){
+      const text = await callOpenAI(buildPremisePrompt());
+      lines = parseBullets(text);
+      if(!lines.length) lines = [text.trim()];
+    }else{
+      lines = offlinePremises();
+    }
+    store.premiseOptions = lines;
+    save(); updateStats(); updateExportPreview();
+    $("premiseState").textContent = "ready";
+    $("premiseState").className = "badge ok";
+    renderPremises(lines);
+  }catch(err){
+    $("premiseState").textContent = "error";
+    $("premiseState").className = "badge err";
+    $("premiseOut").textContent = String(err.message || err);
+  }
+});
+
+$("lockPremise").addEventListener("click", ()=>{
+  if(selectedPremiseIndex < 0){ alert("Tap a premise line first."); return; }
+  store.premiseLocked = store.premiseOptions[selectedPremiseIndex] || "";
+  save(); updateStats(); updateExportPreview();
+  $("premiseState").textContent = "locked";
+  $("premiseState").className = "badge ok";
+  stepShow("acts");
+});
+
+$("copyPremisePrompt").addEventListener("click", async ()=>{
+  const ok = await copyText(buildPremisePrompt());
+  alert(ok ? "Copied." : "Copy failed — tap and hold text to copy manually.");
+});
+
+// Acts
+$("genActs").addEventListener("click", async ()=>{
+  $("actsState").textContent = "generating…";
+  $("actsState").className = "badge warn";
+  try{
+    let text = "";
+    if(store.mode==="ai") text = await callOpenAI(buildActsPrompt());
+    else text = offlineActs();
+    store.actsText = text.trim();
+    $("actsOut").textContent = store.actsText || "(no output)";
+    $("actsState").textContent = "ready";
+    $("actsState").className = "badge ok";
+    save(); updateStats(); updateExportPreview();
+  }catch(err){
+    $("actsState").textContent = "error";
+    $("actsState").className = "badge err";
+    $("actsOut").textContent = String(err.message || err);
+  }
+});
+
+$("copyActsPrompt").addEventListener("click", async ()=>{
+  const ok = await copyText(buildActsPrompt());
+  alert(ok ? "Copied." : "Copy failed — tap and hold to copy manually.");
+});
+
+// Chapters
+$("genCh").addEventListener("click", async ()=>{
+  $("chState").textContent = "generating…";
+  $("chState").className = "badge warn";
+  try{
+    let text = "";
+    if(store.mode==="ai") text = await callOpenAI(buildChaptersPrompt());
+    else text = offlineChapters();
+    store.chaptersText = text.trim();
+    $("chOut").textContent = store.chaptersText || "(no output)";
+    $("chState").textContent = "ready";
+    $("chState").className = "badge ok";
+    save(); updateStats(); updateExportPreview();
+  }catch(err){
+    $("chState").textContent = "error";
+    $("chState").className = "badge err";
+    $("chOut").textContent = String(err.message || err);
+  }
+});
+
+$("copyChPrompt").addEventListener("click", async ()=>{
+  const ok = await copyText(buildChaptersPrompt());
+  alert(ok ? "Copied." : "Copy failed — tap and hold to copy manually.");
+});
+
+// Export actions
+$("copyExport").addEventListener("click", async ()=>{
+  const ok = await copyText(buildExport());
+  alert(ok ? "Export copied to clipboard." : "Copy failed — scroll and select text to copy.");
+});
+
+$("shareExport").addEventListener("click", async ()=>{
+  const text = buildExport();
+  try{
+    if(navigator.share){
+      // Try sharing as a file for better apps compatibility
+      const file = new File([text], "tinywriter-export.txt", {type:"text/plain"});
+      await navigator.share({ title: "TinyWriter Export", text: "TinyWriter export attached.", files: [file] });
+      return;
+    }
+    alert("Sharing not available here. Use Copy export text instead.");
+  }catch(err){
+    alert("Share cancelled (or not supported). Use Copy export text instead.");
+  }
+});
+
+$("dlTxt").addEventListener("click", ()=>{
+  download("tinywriter-export.txt", buildExport());
+});
+
+$("clearExport").addEventListener("click", ()=>{
+  if(!confirm("Clear generated outputs (premises/acts/chapters) but keep your Setup fields?")) return;
+  store.premiseOptions = [];
+  store.premiseLocked = "";
+  store.actsText = "";
+  store.chaptersText = "";
+  save(); updateStats(); updateExportPreview();
+  $("premiseOut").textContent = "";
+  $("actsOut").textContent = "";
+  $("chOut").textContent = "";
+  $("premiseState").textContent = "not generated";
+  $("actsState").textContent = "not generated";
+  $("chState").textContent = "not generated";
+  stepShow("premise");
+});
+
+// Optional: test key
+$("testKey").addEventListener("click", async ()=>{
+  $("keyStatus").textContent = "Testing…";
+  $("keyStatus").className = "tiny warn";
+  try{
+    const out = await callOpenAI("Reply with the single word: OK");
+    $("keyStatus").textContent = (out||"OK").trim().slice(0,40);
+    $("keyStatus").className = "tiny ok";
+  }catch(err){
+    $("keyStatus").textContent = String(err.message || err).slice(0,120);
+    $("keyStatus").className = "tiny err";
+  }
+});
+
+// Helpers
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function cap(s){ return (s||"").charAt(0).toUpperCase() + (s||"").slice(1); }
+function trimOne(s,n){ s=(s||"").replace(/\s+/g," ").trim(); return s.length>n ? s.slice(0,n-1)+"…" : s; }
+function clip(s,n){ s=(s||"").trim(); return s.length>n ? s.slice(0,n)+"\n\n[...clipped...]" : s; }
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+function escapeHtml(str){
+  return (str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+function parseBullets(text){
+  const lines = (text||"").split("\n").map(l=>l.trim()).filter(Boolean);
+  const out = [];
+  for(const l of lines){
+    let m = l.match(/^[-•*]\s+(.*)$/);
+    if(m) out.push(m[1].trim());
+  }
+  if(!out.length){
+    for(const l of lines){
+      let m = l.match(/^\d+\.\s+(.*)$/);
+      if(m) out.push(m[1].trim());
+    }
+  }
+  return out.slice(0,12);
+}
+function readFileAsText(file){
+  return new Promise((resolve, reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=> resolve(String(fr.result || ""));
+    fr.onerror = ()=> reject(fr.error || new Error("File read error"));
+    fr.readAsText(file);
+  });
+}
+
+// Init
+load();
+bindInputs();
+updateModeUI();
+updateStats();
+updateExportPreview();
+if(store.premiseOptions?.length) renderPremises(store.premiseOptions);
+$("actsOut").textContent = store.actsText || "";
+$("chOut").textContent = store.chaptersText || "";
+
+$("premiseState").textContent = store.premiseLocked ? "locked" : (store.premiseOptions.length ? "ready" : "not generated");
+$("actsState").textContent = store.actsText ? "ready" : "not generated";
+$("chState").textContent = store.chaptersText ? "ready" : "not generated";
+
+// Default step
+stepShow("setup");
+</script>
+</body>
+</html>
