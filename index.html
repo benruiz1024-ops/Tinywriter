@@ -503,6 +503,39 @@
         <div class="badge">local</div>
       </div>
       <div class="bd">
+        <div class="field">
+          <label>Style prose generator</label>
+          <div class="help">
+            Create a fresh passage in a specific voice. Tip: paste a style sample, then describe the new scene you want.
+            Output is designed to be original (style-inspired, not copied).
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Style sample / voice reference</label>
+            <textarea id="proseSample" placeholder="Paste the writing sample whose voice/tone you want to emulate."></textarea>
+          </div>
+          <div class="field">
+            <label>New scene prompt</label>
+            <textarea id="prosePrompt" placeholder="e.g., Aeri walks home after the bakery and hears distant music. Keep it cozy, lyrical, and dreamlike."></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="genProse">Generate prose</button>
+          <button class="ghost" id="copyProsePrompt">Copy prose prompt</button>
+          <button class="ghost" id="copyProse">Copy prose output</button>
+          <span class="badge" id="proseState">not generated</span>
+        </div>
+
+        <div class="field">
+          <label>Generated prose</label>
+          <div class="out" id="proseOut"></div>
+        </div>
+
+        <div class="divider"></div>
+
         <div class="actions">
           <button class="primary" id="copyExport">Copy export text</button>
           <button class="ghost" id="shareExport">Share…</button>
@@ -546,7 +579,10 @@ let store = {
   actsText: "",
   chapCount: 24,
   pov: "",
-  chaptersText: ""
+  chaptersText: "",
+  proseSample: "",
+  prosePrompt: "",
+  proseText: ""
 };
 
 function save(){
@@ -567,6 +603,7 @@ function bindInputs(){
     ["nonneg","nonneg"], ["promise","promise"], ["world","world"], ["chars","chars"],
     ["engine","engine"], ["constraints","constraints"],
     ["chapCount","chapCount"], ["pov","pov"],
+    ["proseSample","proseSample"], ["prosePrompt","prosePrompt"],
   ];
   map.forEach(([id,key])=>{
     const el = $(id); if(!el) return;
@@ -708,6 +745,19 @@ function offlineChapters(){
   return out.trim();
 }
 
+function offlineProse(){
+  const scene = trimOne(store.prosePrompt || "A quiet winter walk home after a warm stop at the bakery.", 220);
+  const mood = trimOne(store.vibe || "lyrical, warm, dreamlike", 120);
+  const nameGuess = (store.proseSample.match(/\b[A-Z][a-z]{2,}\b/g) || ["The traveler"])[0];
+  return [
+    `Snow kept falling in soft, unhurried threads, and the lane seemed to listen as ${nameGuess} walked on.`,
+    `The lamps laid their golden light over the drifts, and every step answered with a gentle crunch, small and faithful in the hush.`,
+    `${cap(nameGuess)} held the warmth of the bakery in her sleeves a little longer, as though kindness could be carried like heat from one room into the night.`,
+    `Somewhere ahead, ${scene.toLowerCase()}.`,
+    `The world felt ${mood}, and for a little while nothing asked to be hurried, corrected, or explained.`
+  ].join(" ");
+}
+
 // AI Mode intentionally minimal here; best practice is a tiny server.
 // This remains as a "power user" option.
 async function callOpenAI(prompt){
@@ -796,6 +846,30 @@ bible ? clip(bible, 8000) : "(none)"
   ].join("\n");
 }
 
+function buildProsePrompt(){
+  const sample = clip(store.proseSample || "", 14000);
+  const scene = store.prosePrompt || "Continue with a new winter scene in the same emotional register.";
+  const compass = makeCompass();
+  return [
+`You are a fiction prose assistant.`,
+`Write one new, original prose passage (250-450 words).`,
+`Match style signals from the sample: voice, rhythm, tenderness, imagery density, and sentence flow.`,
+`Do NOT copy phrases/sentences from the sample. Keep it unmistakably new text.`,
+`Use the requested scene prompt as content direction.`,
+``,
+`SCENE REQUEST:`,
+scene,
+``,
+`CREATIVE COMPASS (optional context):`,
+compass || "(none)",
+``,
+`STYLE SAMPLE:`,
+sample || "(none provided)",
+``,
+`Return prose only. No bullets. No analysis. No headings.`
+  ].join("\n");
+}
+
 // Clipboard helper: works on iPhone even if not a secure context (fallback).
 async function copyText(text){
   try{
@@ -842,7 +916,16 @@ function buildExport(){
     store.actsText || "(none)",
     "",
     "== Chapter outline ==",
-    store.chaptersText || "(none)"
+    store.chaptersText || "(none)",
+    "",
+    "== Style prose sample ==",
+    store.proseSample || "(none)",
+    "",
+    "== Style prose prompt ==",
+    store.prosePrompt || "(none)",
+    "",
+    "== Generated style prose ==",
+    store.proseText || "(none)"
   ].join("\n");
 }
 
@@ -984,6 +1067,36 @@ $("copyChPrompt").addEventListener("click", async ()=>{
   alert(ok ? "Copied." : "Copy failed — tap and hold to copy manually.");
 });
 
+// Prose tool
+$("genProse").addEventListener("click", async ()=>{
+  $("proseState").textContent = "generating…";
+  $("proseState").className = "badge warn";
+  try{
+    let text = "";
+    if(store.mode === "ai") text = await callOpenAI(buildProsePrompt());
+    else text = offlineProse();
+    store.proseText = text.trim();
+    $("proseOut").textContent = store.proseText || "(no output)";
+    $("proseState").textContent = "ready";
+    $("proseState").className = "badge ok";
+    save(); updateExportPreview();
+  }catch(err){
+    $("proseState").textContent = "error";
+    $("proseState").className = "badge err";
+    $("proseOut").textContent = String(err.message || err);
+  }
+});
+
+$("copyProsePrompt").addEventListener("click", async ()=>{
+  const ok = await copyText(buildProsePrompt());
+  alert(ok ? "Copied." : "Copy failed — tap and hold to copy manually.");
+});
+
+$("copyProse").addEventListener("click", async ()=>{
+  const ok = await copyText(store.proseText || "");
+  alert(ok ? "Prose copied." : "Copy failed — tap and hold to copy manually.");
+});
+
 // Export actions
 $("copyExport").addEventListener("click", async ()=>{
   const ok = await copyText(buildExport());
@@ -1015,13 +1128,16 @@ $("clearExport").addEventListener("click", ()=>{
   store.premiseLocked = "";
   store.actsText = "";
   store.chaptersText = "";
+  store.proseText = "";
   save(); updateStats(); updateExportPreview();
   $("premiseOut").textContent = "";
   $("actsOut").textContent = "";
   $("chOut").textContent = "";
+  $("proseOut").textContent = "";
   $("premiseState").textContent = "not generated";
   $("actsState").textContent = "not generated";
   $("chState").textContent = "not generated";
+  $("proseState").textContent = "not generated";
   stepShow("premise");
 });
 
@@ -1081,10 +1197,12 @@ updateExportPreview();
 if(store.premiseOptions?.length) renderPremises(store.premiseOptions);
 $("actsOut").textContent = store.actsText || "";
 $("chOut").textContent = store.chaptersText || "";
+$("proseOut").textContent = store.proseText || "";
 
 $("premiseState").textContent = store.premiseLocked ? "locked" : (store.premiseOptions.length ? "ready" : "not generated");
 $("actsState").textContent = store.actsText ? "ready" : "not generated";
 $("chState").textContent = store.chaptersText ? "ready" : "not generated";
+$("proseState").textContent = store.proseText ? "ready" : "not generated";
 
 // Default step
 stepShow("setup");
